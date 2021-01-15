@@ -1,0 +1,41 @@
+GET http://localhost:3000/posts
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjowLCJpYXQiOjE2MTA2ODkyNzIsImV4cCI6MTYxMDY4OTI5Mn0.aPc-XMOADMAIo1dJl1NH80jhbU_EqE1jNG1J-Af9kL8
+###
+
+POST http://localhost:3000/auth/token
+Content-Type: application/json
+
+{
+    "refreshToken":
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjowLCJpYXQiOjE2MTA2ODkzNDl9.kSML2GTw6mpAVt9UGyjglJYp3d-JOyBb7Gj7EhOhjpc"
+}
+
+###
+
+DELETE http://localhost:3000/auth/logout
+Content-Type: application/json
+
+{
+    "refreshToken":
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjowLCJpYXQiOjE2MTA2ODkzNDl9.kSML2GTw6mpAVt9UGyjglJYp3d-JOyBb7Gj7EhOhjpc"
+}
+
+###
+
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+    "username": "junxian",
+    "password": "jx123"
+}
+
+###
+
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+    "username": "wronguser",
+    "password": "wrongpass"
+}
