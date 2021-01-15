@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const atob = require("atob");
 
 require("dotenv").config();
 
@@ -11,12 +12,12 @@ require("dotenv").config();
 const db = [
   {
     user_id: 0,
-    username: "junxian",
+    username: "jx",
     password: "$2b$10$Y44M1TaBRCAxFxh74UF9cerBGjVirIDBGjOJFPaVZ6umAz79bYt7K",
   },
   {
     user_id: 1,
-    username: "jiahwee",
+    username: "jh",
     password: "$2b$10$eSrNKBrOVljqh1v1SD0dp.fj5hwvNk.GPuxfPN6lmwOYUmCMCT0Bm",
   },
 ];
@@ -44,14 +45,30 @@ exports.postToken = (req, res) => {
 
 // If login successful, return accessToken
 exports.postLogin = (req, res) => {
-  const { username, password } = req.body;
+  // check for basic auth header
+  if (
+    !req.headers.authorization ||
+    req.headers.authorization.indexOf("Basic ") === -1
+  ) {
+    return res.status(401).json({ message: "Missing Authorization Header" });
+  }
+
+  // verify auth credentials
+  const base64Credentials = req.headers.authorization.split(" ")[1];
+  const credentials = Buffer.from(base64Credentials, "base64").toString(
+    "ascii"
+  );
+  const [username, password] = credentials.split(":");
+
   const user = db.find((user) => user.username == username);
 
   if (!user) return res.sendStatus(401);
 
+  // Checks password
   bcrypt.compare(password, user.password, function (err, result) {
     if (err) return res.sendStatus(401);
 
+    // If password valid, generate accessToken
     if (result) {
       const accessToken = generateAccessToken({ user_id: user.user_id });
       const refreshToken = jwt.sign(
@@ -62,12 +79,15 @@ exports.postLogin = (req, res) => {
       refreshTokens.push(refreshToken);
 
       res.json({ accessToken, refreshToken });
+
+      // Else, send back status 403
     } else {
       return res.sendStatus(403);
     }
   });
 };
 
+// Function to logout by deleting refreshToken from db
 exports.deleteLogout = (req, res) => {
   refreshTokens = refreshTokens.filter(
     (token) => token !== req.body.refreshToken
