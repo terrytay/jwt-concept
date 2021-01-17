@@ -1,6 +1,5 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-
 require("dotenv").config();
 
 // Fake user db
@@ -25,13 +24,13 @@ let refreshTokens = [];
 
 function generateAccessToken(user) {
   return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-    expiresIn: "20s",
+    expiresIn: "30s",
   });
 }
 
 // Generate a new token when existing one expires using refresh token
 exports.postToken = (req, res) => {
-  const refreshToken = req.body.refreshToken;
+  const refreshToken = req.cookies["refreshToken"];
   if (refreshToken == null) return res.sendStatus(401);
   if (!refreshTokens.includes(refreshToken)) return res.sendStatus(403);
 
@@ -51,14 +50,13 @@ exports.postLogin = (req, res) => {
   ) {
     return res.status(401).json({ message: "Missing Authorization Header" });
   }
-
   // verify auth credentials
   const base64Credentials = req.headers.authorization.split(" ")[1];
   const credentials = Buffer.from(base64Credentials, "base64").toString(
     "ascii"
   );
   const [username, password] = credentials.split(":");
-
+  // const [username, password] = base64Credentials.split(":");
   const user = db.find((user) => user.username == username);
 
   if (!user) return res.sendStatus(401);
@@ -77,8 +75,14 @@ exports.postLogin = (req, res) => {
 
       refreshTokens.push(refreshToken);
 
-      res.json({ accessToken, refreshToken });
-
+      res.cookie("refreshToken", refreshToken, {
+        maxAge: 24 * 60 * 60,
+        // You can't access these tokens in the client's javascript
+        httpOnly: true,
+        // Forces to use https in production
+        secure: false,
+      });
+      res.json({ accessToken });
       // Else, send back status 403
     } else {
       return res.sendStatus(403);
@@ -87,9 +91,10 @@ exports.postLogin = (req, res) => {
 };
 
 // Function to logout by deleting refreshToken from db
-exports.deleteLogout = (req, res) => {
+exports.postLogout = (req, res) => {
   refreshTokens = refreshTokens.filter(
-    (token) => token !== req.body.refreshToken
+    (token) => token !== req.cookies["refreshToken"]
   );
+  res.cookie("refreshToken", undefined);
   res.sendStatus(204);
 };

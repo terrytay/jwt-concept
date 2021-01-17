@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
 
 const authServerRoutes = require("./routes/authServer");
 const serverRoutes = require("./routes/server");
@@ -8,6 +9,17 @@ const serverRoutes = require("./routes/server");
 require("dotenv").config();
 app.use(express.json());
 
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "http://localhost:4200");
+  res.setHeader("Access-Control-Allow-Credentials", true);
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+  next();
+});
+
+app.use(cookieParser());
 app.use("/auth", authServerRoutes);
 
 // Middlware to protect serverRoutes
